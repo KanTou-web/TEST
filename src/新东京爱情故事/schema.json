@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "系统": {
+      "type": "object",
+      "properties": {
+        "当前日期": {
+          "type": "string"
+        },
+        "当前时间": {
+          "type": "string"
+        },
+        "当前地点": {
+          "type": "string"
+        },
+        "天气": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "当前日期",
+        "当前时间",
+        "当前地点",
+        "天气"
+      ]
+    },
+    "绘梨衣": {
+      "type": "object",
+      "properties": {
+        "好感度": {
+          "type": "number"
+        },
+        "穿着": {
+          "type": "object",
+          "properties": {
+            "上衣": {
+              "type": "string"
+            },
+            "下装": {
+              "type": "string"
+            },
+            "鞋子": {
+              "type": "string"
+            },
+            "配饰": {
+              "type": "string"
+            },
+            "内衣": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "上衣",
+            "下装",
+            "鞋子",
+            "配饰",
+            "内衣"
+          ]
+        },
+        "持有物品": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "description": "物品名"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "好感度",
+        "穿着",
+        "持有物品"
+      ]
+    },
+    "路明非": {
+      "type": "object",
+      "properties": {
+        "穿着": {
+          "type": "object",
+          "properties": {
+            "上衣": {
+              "type": "string"
+            },
+            "下装": {
+              "type": "string"
+            },
+            "鞋子": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "上衣",
+            "下装",
+            "鞋子"
+          ]
+        },
+        "持有物品": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "description": "物品名"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "穿着",
+        "持有物品"
+      ]
+    }
+  },
+  "required": [
+    "系统",
+    "绘梨衣",
+    "路明非"
+  ]
+}

@@ -1,0 +1,370 @@
+﻿<template>
+  <div
+    ref="containerRef"
+    class="location-map"
+    :class="{ 'is-expanded': isExpanded, 'is-hovered': isHovered }"
+    @mousemove="onMouseMove"
+    @mouseenter="isHovered = true"
+    @mouseleave="onMouseLeave"
+    @click="isExpanded = !isExpanded"
+  >
+    <div
+      class="map-card"
+      :style="cardStyle"
+    >
+      <!-- 背景渐变 -->
+      <div class="card-bg"></div>
+
+      <!-- 展开后的地图 -->
+      <Transition name="map-fade">
+        <div v-if="isExpanded" class="map-detail">
+          <!-- 路网 SVG -->
+          <svg class="map-roads" viewBox="0 0 240 180" preserveAspectRatio="none">
+            <!-- 主干道 -->
+            <line x1="0" y1="35%" x2="100%" y2="35%" class="road main" />
+            <line x1="0" y1="65%" x2="100%" y2="65%" class="road main" />
+            <line x1="30%" y1="0" x2="30%" y2="100%" class="road main-v" />
+            <line x1="70%" y1="0" x2="70%" y2="100%" class="road main-v" />
+            <!-- 次干道 -->
+            <line x1="0" y1="20%" x2="100%" y2="20%" class="road side" />
+            <line x1="0" y1="50%" x2="100%" y2="50%" class="road side" />
+            <line x1="0" y1="80%" x2="100%" y2="80%" class="road side" />
+            <line x1="15%" y1="0" x2="15%" y2="100%" class="road side" />
+            <line x1="45%" y1="0" x2="45%" y2="100%" class="road side" />
+            <line x1="55%" y1="0" x2="55%" y2="100%" class="road side" />
+            <line x1="85%" y1="0" x2="85%" y2="100%" class="road side" />
+          </svg>
+
+          <!-- 建筑块 -->
+          <div class="building" style="top:42%; left:8%; width:14%; height:18%"></div>
+          <div class="building" style="top:16%; left:32%; width:11%; height:14%"></div>
+          <div class="building" style="top:68%; left:72%; width:16%; height:16%"></div>
+          <div class="building" style="top:22%; right:8%; width:9%; height:22%"></div>
+          <div class="building" style="top:52%; left:2%; width:7%; height:10%"></div>
+          <div class="building" style="top:8%; left:68%; width:12%; height:9%"></div>
+
+          <!-- 定位点 -->
+          <div class="pin-wrap">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="pin-svg">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#34D399" />
+              <circle cx="12" cy="9" r="2.5" fill="#111827" />
+            </svg>
+          </div>
+
+          <div class="map-bottom-fade"></div>
+        </div>
+      </Transition>
+
+      <!-- 网格纹理 -->
+      <div class="card-grid" :style="{ opacity: isExpanded ? 0 : 0.03 }"></div>
+
+      <!-- 内容 -->
+      <div class="card-content">
+        <!-- 顶部：图标 + Live 标签 -->
+        <div class="card-top">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="map-icon">
+            <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+            <line x1="9" x2="9" y1="3" y2="18" />
+            <line x1="15" x2="15" y1="6" y2="21" />
+          </svg>
+          <span class="live-tag">
+            <span class="live-dot"></span>
+            Live
+          </span>
+        </div>
+
+        <!-- 底部：地点名 -->
+        <div class="card-bottom">
+          <span class="location-name">{{ location }}</span>
+          <Transition name="map-fade">
+            <span v-if="weather" class="location-weather">{{ weather }}</span>
+          </Transition>
+          <div class="card-underline"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Click hint -->
+    <Transition name="hint-fade">
+      <span v-if="isHovered && !isExpanded" class="click-hint">点击展开地图</span>
+    </Transition>
+  </div>
+</template>
+
+<script setup lang="ts">
+interface Props {
+  location?: string;
+  weather?: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  location: "未知地点",
+  weather: "",
+});
+
+const isHovered = ref(false);
+const isExpanded = ref(false);
+const containerRef = ref<HTMLDivElement>();
+const mouseX = ref(0);
+const mouseY = ref(0);
+
+const cardStyle = computed(() => {
+  const rx = mouseY.value * 0.08;
+  const ry = mouseX.value * -0.08;
+  return {
+    transform: `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg)`,
+    width: isExpanded.value ? "220px" : "150px",
+    height: isExpanded.value ? "190px" : "80px",
+  };
+});
+
+function onMouseMove(e: MouseEvent) {
+  if (!containerRef.value) return;
+  const rect = containerRef.value.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  mouseX.value = e.clientX - cx;
+  mouseY.value = e.clientY - cy;
+}
+
+function onMouseLeave() {
+  mouseX.value = 0;
+  mouseY.value = 0;
+  isHovered.value = false;
+}
+</script>
+
+<style lang="scss" scoped>
+.location-map {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.map-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.15s ease-out;
+  transform-style: preserve-3d;
+}
+
+.is-hovered .map-card {
+  border-color: rgba(52, 211, 153, 0.2);
+  box-shadow: 0 0 20px rgba(52, 211, 153, 0.06);
+}
+
+.is-expanded .map-card {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(52, 211, 153, 0.15);
+}
+
+.card-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.04), transparent 40%, rgba(52, 211, 153, 0.06));
+}
+
+/* --- 地图详情 --- */
+.map-detail {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.map-roads {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.road {
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+}
+
+.is-expanded .road { animation: draw-road 1.2s ease-out forwards; }
+.is-expanded .road.side { animation-delay: 0.15s; }
+
+.road.main  { stroke-width: 3; stroke: rgba(255,255,255,0.2); }
+.road.main-v { stroke-width: 2.5; stroke: rgba(255,255,255,0.16); }
+.road.side { stroke-width: 1.2; }
+
+@keyframes draw-road {
+  to { stroke-dashoffset: 0; }
+}
+
+.building {
+  position: absolute;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  opacity: 0;
+}
+
+.is-expanded .building {
+  animation: fade-building 0.5s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+@keyframes fade-building {
+  to { opacity: 1; }
+}
+
+.pin-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  opacity: 0;
+}
+
+.is-expanded .pin-wrap {
+  animation: pin-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s forwards;
+}
+
+@keyframes pin-pop {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.pin-svg {
+  filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.5));
+}
+
+.map-bottom-fade {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 40%;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.8), transparent);
+}
+
+/* --- 网格纹理 --- */
+.card-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 15px 15px;
+  transition: opacity 0.3s;
+}
+
+/* --- 内容 --- */
+.card-content {
+  position: relative;
+  z-index: 10;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.map-icon {
+  transition: filter 0.3s;
+}
+
+.is-hovered .map-icon {
+  filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.6));
+}
+
+.live-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 500;
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.04);
+  letter-spacing: 0.8px;
+  transition: all 0.2s;
+}
+
+.is-hovered .live-tag {
+  background: rgba(255, 255, 255, 0.06);
+  transform: scale(1.05);
+}
+
+.live-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #34D399;
+}
+
+.card-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.location-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: #e2e8f0;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  line-height: 1.2;
+}
+
+.is-hovered .location-name {
+  transform: translateX(2px);
+}
+
+.location-weather {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.card-underline {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(52, 211, 153, 0.4), rgba(52, 211, 153, 0.15), transparent);
+  transform-origin: left;
+  transform: scaleX(0.25);
+  transition: transform 0.4s ease;
+}
+
+.is-hovered .card-underline,
+.is-expanded .card-underline {
+  transform: scaleX(1);
+}
+
+/* --- Click hint --- */
+.click-hint {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #475569;
+  white-space: nowrap;
+}
+
+/* --- 过渡动画 --- */
+.map-fade-enter-active { transition: opacity 0.35s ease; }
+.map-fade-leave-active { transition: opacity 0.2s ease; }
+.map-fade-enter-from,
+.map-fade-leave-to { opacity: 0; }
+
+.hint-fade-enter-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.hint-fade-leave-active { transition: opacity 0.15s ease; }
+.hint-fade-enter-from { opacity: 0; transform: translate(-50%, 4px); }
+.hint-fade-leave-to { opacity: 0; }
+</style>
+
