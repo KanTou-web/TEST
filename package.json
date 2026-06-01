@@ -29,7 +29,11 @@
     "css-loader": "^7.1.4",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
+<<<<<<< HEAD
     "eslint-import-resolver-typescript": "^4.4.5",
+=======
+    "eslint-import-resolver-typescript": "^4.4.4",
+>>>>>>> 1b593ab69d89d2d5d22e9730e0163f19dd209fac
     "eslint-plugin-better-tailwindcss": "^3.8.0",
     "eslint-plugin-import-x": "^4.16.2",
     "eslint-plugin-pinia": "^0.4.2",
